@@ -1,52 +1,38 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { User } from './entities/user.entity';
 import { response } from 'express';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository, UpdateResult } from 'typeorm';
 
 @Injectable()
 export class UsersService {
-    private users: User[] = [
-        {
-            id: 1,
-            name: "Registro de Usuarios",
-            description: "Registro de Usuarios",
-            tags: ['node.js', 'nestjs', 'javascript'],
-        },
-    ];
-        findAll() {
-            return this.users;
+    constructor(
+        @InjectRepository(User)
+        private usersRepository: Repository<User>
+    ) {}
+   
+        findAll(): Promise<User[]> {
+            return this.usersRepository.find();
         }
 
-        findOne(id: string) {
-            const user = this.users.find((user: User) => user.id === Number(id));
-
-            if(!user) {
-                throw new HttpException(`User ID ${id} not found`,
-                    HttpStatus.NOT_FOUND,
-                );
-            }
-            return user;
+        findOne(id: number): Promise<User | null> {
+            return this.usersRepository.findOneBy({ id });
         }
 
         create(createUserDto: any) {
-            this.users.push(createUserDto);
-            return createUserDto;
+          return  this.usersRepository.save(createUserDto);
         }
 
-        update(id: string, updateUserDto: any) {
-            const indexUser = this.users.findIndex(
-                (user: User) => user.id === Number(id),
-        );
-
-        this.users[indexUser] = updateUserDto;
+        update(userId: number, UserInformation: Partial<User>): Promise<UpdateResult> {
+            return this.usersRepository.update(userId, UserInformation);
         }
 
-        remove(id: string) {
-            const indexUser = this.users.findIndex(
-                (user: User) => user.id === Number(id),
-        );
-
-        if (indexUser >= 0) {
-            this.users.splice(indexUser, 1);
+        async remove(id: number): Promise<string> {
+            try {
+                await this.usersRepository.delete(id);
+                return 'OK deleted'
+            } catch (error) {
+                throw error
+            }
         }
-    }
 }
