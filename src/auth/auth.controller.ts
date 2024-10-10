@@ -8,9 +8,16 @@ import { Body,
 import { AuthService } from './auth.service';
 import { AuthGuard } from './guard/auth.guard';
 import { Request } from '@nestjs/common';
+import { Headers } from '@nestjs/common';
 
 @Controller('auth')
 export class AuthController {
+
+    @Get('token')
+    getToken(@Headers('authorization') authHeader: string) {
+        const token = authHeader?.replace('Bearer', '');
+        return { token };
+    }
     constructor (private readonly authService: AuthService) {}
 
         @HttpCode(HttpStatus.OK)

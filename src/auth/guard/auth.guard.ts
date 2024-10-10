@@ -5,30 +5,32 @@ import { Request } from "express";
 @Injectable()
 export class AuthGuard implements CanActivate {
 
-    constructor (private jwtService: JwtService){}
-    
-    async canActivate(context: ExecutionContext): Promise<boolean> {
-        const request = context.switchToHttp().getRequest<Request>();
-        const token = this.extractTokenFromHeader(request);
-        if(!token) {
-            throw new UnauthorizedException();
+    constructor(private jwtService: JwtService) { }
+
+    async canActivate(context: ExecutionContext,
+    ): Promise<boolean>{
+        const request = context.switchToHttp().getRequest();
+        const authHeader = request.headers['authorization'];
+        if (!authHeader) {
+            throw new UnauthorizedException('Token não fornecido.');
         }
-        try {
-            const payload = await this.jwtService.verifyAsync(
-                token,
-                {
-                    secret: process.env.JWT_SECRET
-                }
-            );
-            return true;
+        const token = authHeader.replace('Bearer ', '');
+
+        if (!this.validateToken(token)) {
+            throw new UnauthorizedException('Token inválido.');
         }
-        catch (error) {
-            console.error('JWT verification failed:', error.message);
-            throw new UnauthorizedException('Invalid token');
-        }
+
+        return true;
     }
+
+    validateToken(token: string): boolean {
+
+        return !!token;
+    }
+
     private extractTokenFromHeader(request: Request): string | undefined {
-        const [type, token] = request.headers.authorization?.split(' ') ?? [];
-        return type === 'Bearer' ? token : undefined;
+    const [type, token] = request.headers.authorization?.split(' ') ?? [];
+    return type === 'Bearer' ? token : undefined;
     }
+
 }
