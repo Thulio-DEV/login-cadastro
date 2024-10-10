@@ -1,11 +1,17 @@
-import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
+import { Body, 
+    Controller, 
+    Get, 
+    HttpCode, 
+    HttpStatus, 
+    Post, 
+    UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
+import { AuthGuard } from './guard/auth.guard';
+import { Request } from '@nestjs/common';
 
-function signInDto() {
-    interface SignInDto {
-        username: string;
-        password: string;
-    }
+export class SignInDto {
+    password: string;
+    email: string;
 }
 
 @Controller('auth')
@@ -14,9 +20,25 @@ export class AuthController {
 
         @HttpCode(HttpStatus.OK)
         @Post('login')
-
-        signIn(@Body() signInDto: Record<string, any>) {
-            return this.authService.signIn(signInDto.username, signInDto.password);
+        async signIn(@Body() signInDto: any) {
+            console.log(signInDto)
+            if(!signInDto.password && !signInDto.email) {
+                console.log("Vou cair no erro ")
+                return {
+                    message: 'password or email must be provided.',
+                statusCode: HttpStatus.BAD_REQUEST,
+                };
+            }
+            console.log('Username:', signInDto.email, 'Password:', signInDto.password);
+            return this.authService.signIn(signInDto.email, signInDto.password);
         }
+
+        @UseGuards(AuthGuard)
+        @Get('profile')
+        getProfile(@Request() req) {
+            console.log("req", req)
+            return req.user;
+        }
+
     }
 
